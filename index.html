@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subsistence</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--earth:#5C4033;--gold:#FFD700;--gold-dark:#B8860B;--danger:#D94F4F;--warn:#E8A317;--success:#4CAF50;--water:#4A90D9;--card:rgba(255,248,235,0.95);--text:#3E2723;--dim:#7B6B5A}
+body{font-family:'Nunito',sans-serif;background:#87CEEB;color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* WORLD */
+.world{position:fixed;inset:0;z-index:0;pointer-events:none}
+.sky{position:absolute;top:0;left:0;right:0;height:55%;background:linear-gradient(180deg,#5BA3D9 0%,#87CEEB 40%,#B5E4F7 70%,#FFE4B5 100%)}
+.sun{position:absolute;width:80px;height:80px;background:radial-gradient(circle,#FFE57F,#FFD700,#FFA000);border-radius:50%;top:8%;right:12%;box-shadow:0 0 60px rgba(255,215,0,0.6);animation:pulse 4s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 60px rgba(255,215,0,0.6)}50%{box-shadow:0 0 90px rgba(255,215,0,0.8)}}
+.clouds{position:absolute;top:5%;left:0;right:0;height:200px}
+.cloud{position:absolute;background:#fff;border-radius:50px;opacity:.8;animation:drift linear infinite}
+.cloud:nth-child(1){width:120px;height:40px;top:20px;left:-120px;animation-duration:35s}
+.cloud:nth-child(2){width:80px;height:30px;top:60px;left:-80px;animation-duration:45s;animation-delay:10s;opacity:.6}
+.cloud:nth-child(3){width:100px;height:35px;top:10px;left:-100px;animation-duration:40s;animation-delay:20s;opacity:.7}
+@keyframes drift{from{transform:translateX(-10vw)}to{transform:translateX(110vw)}}
+.ground{position:absolute;bottom:0;left:0;right:0;height:50%;background:linear-gradient(180deg,#7CBA5C 0%,#5A9A3C 5%,#8B6914 20%,#6B4F1D 60%,#5C4033 100%)}
+
+.wrap{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:.75rem}
+.card{background:var(--card);border-radius:16px;box-shadow:0 3px 12px rgba(0,0,0,.08);border:2px solid rgba(139,105,20,.15);padding:.75rem;margin-bottom:.75rem}
+.title{font-family:'Fredoka',sans-serif;font-weight:700;color:var(--earth)}
+
+/* INTRO */
+#intro{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:2rem;animation:fadeUp .8s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+#intro h1{font-family:'Fredoka',sans-serif;font-size:4rem;font-weight:700;color:var(--earth);text-shadow:3px 3px 0 rgba(255,215,0,.4);margin-bottom:.25rem}
+#intro .tag{font-size:1.1rem;color:var(--earth);font-weight:600;margin-bottom:1.5rem;opacity:.7}
+#intro .blurb{max-width:440px;line-height:1.7;background:var(--card);padding:1.5rem;border-radius:16px;margin-bottom:1.5rem;font-size:.95rem;box-shadow:0 4px 20px rgba(0,0,0,.1);border:2px solid rgba(139,105,20,.2)}
+.modes{display:flex;gap:.75rem;margin-bottom:2rem}
+.modebtn{background:var(--card);border:3px solid rgba(139,105,20,.2);border-radius:16px;padding:1rem 1.5rem;cursor:pointer;transition:all .2s;text-align:center;min-width:160px}
+.modebtn:hover{border-color:var(--gold-dark);transform:translateY(-2px)}
+.modebtn.on{border-color:var(--gold-dark);background:rgba(255,215,0,.12);box-shadow:0 4px 15px rgba(184,134,11,.2)}
+.modebtn .ml{font-family:'Fredoka',sans-serif;font-size:1.1rem;font-weight:600;color:var(--earth)}
+.modebtn .md{font-size:.75rem;color:var(--dim);margin-top:.25rem}
+.bigbtn{background:linear-gradient(135deg,#E8703A,#D94F4F);color:#fff;border:none;padding:1rem 3rem;font-size:1.3rem;font-family:'Fredoka',sans-serif;font-weight:600;border-radius:60px;cursor:pointer;transition:all .2s;box-shadow:0 6px 20px rgba(217,79,79,.4);border-bottom:4px solid #B03030}
+.bigbtn:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(217,79,79,.5)}
+
+/* HUD */
+#game{display:none;padding-bottom:2rem}
+.hud{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem}
+.hud-stats{display:flex;gap:.4rem;flex-wrap:wrap}
+.st{display:flex;align-items:center;gap:.25rem;background:#fff;padding:.3rem .65rem;border-radius:12px;font-size:.8rem;font-weight:700;border:2px solid rgba(0,0,0,.06)}
+.st.ss{color:#666}.st.sm{color:var(--gold-dark)}.st.sh{color:var(--success)}.st.so{color:var(--warn)}
+.st .v{transition:all .3s}
+
+/* FARM */
+.farm{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.ft{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;background:#D4C4A0;transition:all .3s;border:2px solid rgba(0,0,0,.05)}
+.ft.on{background:#8FBC6B;border-color:rgba(0,0,0,.08);animation:pop .4s ease}
+.ft.bld{background:#C4A86B;border-color:rgba(139,105,20,.3)}
+@keyframes pop{0%{transform:scale(.5)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
+
+/* FAMILY */
+.fam{display:flex;gap:.4rem;flex-wrap:wrap}
+.fm{display:flex;align-items:center;gap:.35rem;background:#fff;padding:.4rem .65rem;border-radius:12px;font-size:.78rem;font-weight:600;border:2px solid rgba(0,0,0,.06)}
+.fm .av{font-size:1.3rem}
+.fm .fi{display:flex;flex-direction:column;line-height:1.2}
+.fm .fr{font-size:.65rem;color:var(--dim);font-weight:400}
+.fm.sick{border-color:var(--danger);background:#FFF0F0}
+.fm.sick::after{content:"\1F912";margin-left:.2rem}
+.fm.edu{border-color:var(--water);background:#F0F7FF}
+.fm.edu::after{content:"\1F4DA";margin-left:.2rem}
+.fm.dead{opacity:.3;text-decoration:line-through;border-color:#ccc}
+
+/* SHOP */
+.shops{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+@media(max-width:650px){.shops{grid-template-columns:1fr}}
+.shop h3{font-family:'Fredoka',sans-serif;font-size:.95rem;color:var(--earth);margin-bottom:.6rem}
+.si{display:flex;justify-content:space-between;align-items:center;padding:.5rem .6rem;background:#fff;border-radius:10px;margin-bottom:.4rem;border:2px solid rgba(0,0,0,.04);transition:all .15s}
+.si:hover{border-color:rgba(139,105,20,.2)}
+.sil{flex:1;min-width:0}
+.sin{font-weight:700;font-size:.82rem}
+.sid{font-size:.68rem;color:var(--dim)}
+.sio{font-size:.68rem;color:var(--success);font-weight:600}
+.sir{display:flex;align-items:center;gap:.3rem;flex-shrink:0}
+.b{padding:.3rem .6rem;border-radius:10px;font-size:.72rem;font-weight:700;cursor:pointer;transition:all .15s;border:2px solid;white-space:nowrap}
+.bc{background:#FFF8E1;color:var(--gold-dark);border-color:#E8C84A}
+.bc:hover:not(:disabled){background:#FFE082;transform:scale(1.05)}
+.bm{background:var(--gold);color:var(--earth);border-color:var(--gold-dark);font-size:.65rem;padding:.25rem .45rem}
+.bm:hover:not(:disabled){background:#FFE082;transform:scale(1.05)}
+.bi{background:#E8F5E9;color:#2E7D32;border-color:#81C784}
+.bi:hover:not(:disabled){background:#C8E6C9;transform:scale(1.05)}
+.b:disabled{opacity:.3;cursor:not-allowed;transform:none}
+.bd{background:#eee;color:#999;border-color:#ccc}
+
+/* END BTN */
+.endarea{text-align:center;margin-bottom:.75rem}
+.endbtn{background:linear-gradient(135deg,var(--success),#2E7D32);color:#fff;border:none;padding:.85rem 2.5rem;font-size:1.1rem;font-family:'Fredoka',sans-serif;font-weight:600;border-radius:60px;cursor:pointer;transition:all .2s;box-shadow:0 4px 15px rgba(76,175,80,.3);border-bottom:4px solid #1B5E20}
+.endbtn:hover{transform:translateY(-2px)}
+
+/* LOG */
+.logscr{max-height:100px;overflow-y:auto}
+.le{font-size:.75rem;padding:.3rem .5rem;margin-bottom:3px;border-radius:6px;border-left:3px solid #ccc;background:rgba(255,255,255,.5)}
+.le.good{border-left-color:var(--success);background:rgba(76,175,80,.08)}
+.le.bad{border-left-color:var(--danger);background:rgba(217,79,79,.08)}
+.le.neutral{border-left-color:var(--warn);background:rgba(232,163,23,.05)}
+
+/* MODAL */
+.mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px)}
+.mbg.open{display:flex}
+.mbox{background:var(--card);border-radius:20px;padding:2rem;max-width:480px;width:100%;text-align:center;animation:mi .3s ease;border:3px solid rgba(139,105,20,.2);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+@keyframes mi{from{opacity:0;transform:scale(.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.mbox .eic{font-size:3.5rem;margin-bottom:.75rem;animation:ib .5s ease}
+@keyframes ib{0%{transform:scale(.3) rotate(-10deg)}60%{transform:scale(1.2) rotate(5deg)}100%{transform:scale(1) rotate(0)}}
+.mbox h2{font-family:'Fredoka',sans-serif;font-size:1.4rem;color:var(--earth);margin-bottom:.5rem}
+.mbox .etx{color:var(--dim);line-height:1.6;margin-bottom:1rem;font-size:.9rem}
+.mbox .eim{font-weight:700;color:var(--earth);margin-bottom:1rem;font-size:.85rem;padding:.5rem;background:rgba(0,0,0,.04);border-radius:10px}
+.mb{padding:.55rem 1.5rem;border-radius:14px;font-size:.85rem;font-weight:700;cursor:pointer;transition:all .15s;margin:.25rem;border:2px solid}
+.mb1{background:var(--success);color:#fff;border-color:#2E7D32}
+.mb1:hover{background:#2E7D32;transform:scale(1.05)}
+.mb2{background:#fff;color:var(--text);border-color:#ccc}
+.mb2:hover{background:#f5f5f5;transform:scale(1.05)}
+
+/* OVERLAYS */
+.sov{display:none;position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.6);align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.sov.active{display:flex}
+.stx{font-family:'Fredoka',sans-serif;font-size:2.5rem;color:#fff;text-shadow:0 4px 20px rgba(0,0,0,.5);animation:sf .9s ease forwards}
+@keyframes sf{0%{opacity:0;transform:scale(.8)}25%{opacity:1;transform:scale(1)}75%{opacity:1}100%{opacity:0;transform:scale(1.05)}}
+.fln{position:fixed;pointer-events:none;font-family:'Fredoka',sans-serif;font-weight:700;font-size:1.5rem;z-index:80;animation:fu 1s ease forwards}
+@keyframes fu{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-70px)}}
+.fln.pos{color:var(--success)}.fln.neg{color:var(--danger)}
+
+/* GAME OVER */
+#gover{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:2rem}
+#gover h1{font-family:'Fredoka',sans-serif;font-size:2.2rem;color:var(--earth);margin-bottom:1rem}
+.gos{background:var(--card);padding:1.5rem;border-radius:16px;line-height:2;font-size:.95rem;margin-bottom:1.5rem;border:2px solid rgba(139,105,20,.2);box-shadow:0 4px 20px rgba(0,0,0,.1);max-width:560px;width:100%}
+.gor{max-width:620px;width:100%;background:var(--card);padding:1.5rem;border-radius:16px;color:var(--text);line-height:1.75;font-size:.85rem;margin-bottom:2rem;border:2px solid rgba(139,105,20,.15);text-align:left;max-height:60vh;overflow-y:auto}
+.gor h3{font-family:'Fredoka',sans-serif;color:var(--earth);margin:1rem 0 .4rem;font-size:1rem}
+.gor h3:first-child{margin-top:0}
+.gor .std{font-size:.75rem;color:var(--water);font-weight:700;margin-bottom:.2rem}
+.gor .q{font-weight:700;color:var(--earth);margin-top:.5rem;font-size:.88rem}
+.gor p{margin-bottom:.5rem}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:4px}
+</style>
+</head>
+<body>
+<div class="world"><div class="sky"><div class="sun"></div><div class="clouds"><div class="cloud"></div><div class="cloud"></div><div class="cloud"></div></div></div><div class="ground"></div></div>
+<div class="wrap">
+
+<!-- INTRO -->
+<div id="intro">
+  <h1>SUBSISTENCE</h1>
+  <div class="tag">A Farming Survival Simulation</div>
+  <div class="blurb">
+    You lead a small farming family in rural Sub-Saharan Africa. Each season, decide what to grow, what to invest in, and how to protect the people who depend on you.<br><br>
+    The rains don't always come. The prices aren't always fair. Every choice has a tradeoff.<br><br>
+    <strong>How will your decisions shape your family's future?</strong>
+  </div>
+  <div class="modes">
+    <div class="modebtn on" id="m10" onclick="pickMode(10)"><div class="ml">📋 10 Seasons</div><div class="md">Quick — one class period</div></div>
+    <div class="modebtn" id="m15" onclick="pickMode(15)"><div class="ml">📖 15 Seasons</div><div class="md">Extended — investments pay off</div></div>
+  </div>
+  <button class="bigbtn" onclick="startGame()">🌱 Start Farming</button>
+</div>
+
+<!-- GAME -->
+<div id="game">
+  <div class="card hud">
+    <div class="title" style="font-size:1.2rem">🌾 SUBSISTENCE</div>
+    <div class="hud-stats">
+      <div class="st ss">📅 <span id="yr" class="v">1</span>/<span id="mx">10</span></div>
+      <div class="st sm">💰 $<span id="mn" class="v">50</span></div>
+      <div class="st sh">❤️ <span id="hp" class="v">75</span></div>
+      <div class="st so">😊 <span id="mr" class="v">65</span></div>
+    </div>
+  </div>
+  <div class="card"><div class="farm" id="farm"></div></div>
+  <div class="card"><div class="fam" id="fam"></div></div>
+  <div class="shops">
+    <div class="card shop"><h3>🌾 Crops & Livestock</h3><div id="clist"></div></div>
+    <div class="card shop"><h3>🔧 Investments</h3><div id="ilist"></div></div>
+  </div>
+  <div class="endarea"><button class="endbtn" id="endbtn" onclick="endSeason()">⛅ End Season — See What Happens</button></div>
+  <div class="card"><h3 class="title" style="font-size:.95rem;margin-bottom:.5rem">📜 What Happened</h3><div class="logscr" id="logscr"></div></div>
+</div>
+
+<!-- MODAL -->
+<div class="mbg" id="mbg"><div class="mbox">
+  <div class="eic" id="eic"></div>
+  <h2 id="etl"></h2>
+  <p class="etx" id="etx"></p>
+  <div class="eim" id="eim"></div>
+  <div id="ech"></div>
+</div></div>
+
+<!-- SEASON OVERLAY -->
+<div class="sov" id="sov"><div class="stx" id="stx"></div></div>
+
+<!-- GAME OVER -->
+<div id="gover">
+  <h1 id="got"></h1>
+  <div class="gos" id="gos"></div>
+  <div class="gor" id="goref"></div>
+  <button class="bigbtn" onclick="location.reload()">🔄 Try Again</button>
+</div>
+</div>
+
+<script>
+var TILES=14;
+var AV=['👩🏾‍🌾','👨🏾‍🌾','👧🏾','👦🏾','👵🏾'];
+var CIC={maize:'🌽',cassava:'🌿',cocoa:'🍫',chickens:'🐔',goats:'🐐'};
+var IIC={well:'💧',school:'🏫',clinic:'🏥',mobile:'📱',solar:'☀️',insurance:'🛡️'};
+var CVB={maize:'Planted',cassava:'Planted',cocoa:'Planted',chickens:'Raised',goats:'Raised'};
+var IVB={well:'Built',school:'Paid',clinic:'Secured',mobile:'Bought',solar:'Installed',insurance:'Purchased'};
+var G=null;
+var MAXS=10;
+
+function pickMode(n){
+  MAXS=n;
+  document.getElementById('m10').className='modebtn'+(n===10?' on':'');
+  document.getElementById('m15').className='modebtn'+(n===15?' on':'');
+}
+
+function freshG(){
+  return {
+    year:1,money:50,health:75,morale:65,
+    family:[
+      {name:'Amara',role:'You',age:32,sick:false,edu:false,alive:true},
+      {name:'Kofi',role:'Partner',age:30,sick:false,edu:false,alive:true},
+      {name:'Nia',role:'Daughter',age:10,sick:false,edu:false,alive:true},
+      {name:'Tayo',role:'Son',age:7,sick:false,edu:false,alive:true},
+      {name:'Mama Sade',role:'Elder',age:61,sick:false,edu:false,alive:true}
+    ],
+    crops:{
+      maize:{owned:0,cost:8,rev:[5,17],label:'Maize',desc:'Reliable staple'},
+      cassava:{owned:0,cost:6,rev:[4,12],label:'Cassava',desc:'Drought-resistant'},
+      cocoa:{owned:0,cost:20,rev:[0,44],label:'Cocoa (Export)',desc:'High risk, prices set abroad'},
+      chickens:{owned:0,cost:11,rev:[6,16],label:'Chickens',desc:'Eggs + meat'},
+      goats:{owned:0,cost:18,rev:[9,27],label:'Goats',desc:'Hardy, good resale'}
+    },
+    inv:{
+      well:{owned:false,cost:40,label:'Water Well',desc:'Reduces drought impact'},
+      school:{owned:false,cost:30,label:'School Fees',desc:'Educate the kids'},
+      clinic:{owned:false,cost:35,label:'Clinic Access',desc:'Reduces illness severity'},
+      mobile:{owned:false,cost:20,label:'Mobile Phone',desc:'Market prices + banking'},
+      solar:{owned:false,cost:50,label:'Solar Panel',desc:'Power + light'},
+      insurance:{owned:false,cost:15,label:'Crop Insurance',desc:'Partial payout on failure'}
+    },
+    log:[],eq:[],loan:0,earned:0,schS:0,dec:[],cd:{},hist:[],
+    tiles:new Array(TILES).fill(null)
+  };
+}
+
+// === EVENTS ===
+var EV=[
+  {id:'drought',icon:'☀️',title:'Drought',cd:3,prob:.18,
+   text:'The rains never came. Soil cracking, crops wilting, neighboring farms going silent.',
+   fn:function(g){var l=g.inv.well.owned?.25:.65;for(var k in g.crops){g.crops[k].owned=Math.floor(g.crops[k].owned*(1-l))}updFarm();return g.inv.well.owned?'Your well kept most crops alive!':'Heavy crop losses. A well could have saved them.'}},
+  {id:'locusts',icon:'🦗',title:'Locust Swarm',cd:4,prob:.09,
+   text:'Millions of locusts strip everything green in hours.',
+   fn:function(g){g.crops.maize.owned=0;g.crops.cassava.owned=Math.floor(g.crops.cassava.owned*.4);g.morale-=8;updFarm();return'Maize destroyed. Cassava barely survived. Morale -8.'}},
+  {id:'flood',icon:'🌊',title:'Flash Flooding',cd:3,prob:.12,
+   text:'Extreme rain sends floodwater surging across the fields.',
+   fn:function(g){var l=Math.min(g.money,18);g.money-=l;g.crops.cassava.owned=Math.floor(g.crops.cassava.owned*.5);g.health-=6;updFarm();return'Flooding: -$'+l+', cassava damaged. Health -6.'}},
+  {id:'good_rains',icon:'🌧️',title:'Perfect Rains!',cd:2,prob:.15,
+   text:'Clouds opened at exactly the right moment. Everything planted is thriving!',
+   fn:function(g){var b=0;for(var k in g.crops){b+=g.crops[k].owned*4}g.money+=b;g.morale+=5;return b>0?'Bumper harvest! +$'+b+'. Morale +5.':'Great weather — nothing planted.'}},
+  {id:'heatwave',icon:'🔥',title:'Extreme Heat Wave',cd:3,prob:.1,
+   text:'Record temperatures. Livestock suffer, elderly at risk.',
+   fn:function(g){g.health-=6;g.crops.chickens.owned=Math.max(0,g.crops.chickens.owned-1);var e=g.family.find(function(f){return f.role==='Elder'&&f.alive});if(e&&!g.inv.clinic.owned&&!e.sick){e.sick=true;return'Lost a chicken. Mama Sade collapsed. Health -6.'}return'Lost a chicken. Health -6.'}},
+  {id:'pest',icon:'🐛',title:'Crop Disease',cd:3,prob:.1,
+   text:'Fungal blight spreading through staple crops.',
+   fn:function(g){g.crops.maize.owned=Math.floor(g.crops.maize.owned*.5);g.crops.cassava.owned=Math.floor(g.crops.cassava.owned*.5);updFarm();return'Blight: half your maize and cassava gone.'}},
+  {id:'wind',icon:'💨',title:'Windstorm',cd:3,prob:.08,
+   text:'Powerful winds tear across the landscape.',
+   fn:function(g){var d=Math.min(g.money,10);g.money-=d;g.crops.cocoa.owned=Math.max(0,g.crops.cocoa.owned-1);updFarm();return'Storm: -$'+d+'. Lost cocoa to wind.'}},
+  {id:'market_crash',icon:'📉',title:'Global Price Collapse',cd:4,prob:.12,
+   text:'Commodity traders crashed cocoa prices. They have never seen your farm.',
+   fn:function(g){g.crops.cocoa.rev=[0,12];return'Cocoa nearly worthless. Prices set far away.'},
+   rec:function(g){g.crops.cocoa.rev=[0,44]}},
+  {id:'middleman',icon:'🤑',title:'The Middleman',cd:3,prob:.12,
+   text:'Only buyer around offers half the fair price. Take it or watch it rot.',
+   fn:function(g){var c=0;for(var k in g.crops){c+=g.crops[k].owned*2}g.money=Math.max(0,g.money-c);return c>0?'Middleman skimmed $'+c+'.':'Nothing to sell.'}},
+  {id:'seed_patent',icon:'🧬',title:'Patented Seeds',cd:5,prob:.07,ch:true,
+   text:'A corporation claims your saved seeds are their property.',
+   choices:[
+     {label:'💸 Buy new ($15)',fn:function(g){g.money=Math.max(0,g.money-15);return'Paid $15 for seeds you used to save free.'}},
+     {label:'✊ Keep yours',fn:function(g){if(Math.random()<.3){g.crops.maize.owned=Math.max(0,g.crops.maize.owned-1);return'Officials took part of your crop.'}return'Nobody came. This time.'}}
+   ]},
+  {id:'corruption',icon:'💼',title:'Official "Visit"',cd:3,prob:.14,ch:true,
+   text:'Official demands a fee for your permit. Not legal — but refusing has consequences.',
+   choices:[
+     {label:'💸 Pay $15',fn:function(g){g.money=Math.max(0,g.money-15);g.morale-=5;return'Paid $15. Permit kept.'}},
+     {label:'✊ Refuse',fn:function(g){g.morale-=8;if(Math.random()<.45){g.money=Math.max(0,g.money-22);return'Retaliation. Lost $22.'}return'Report filed. Nothing happened.'}}
+   ]},
+  {id:'water_priv',icon:'🚰',title:'Water Privatization',cd:5,prob:.07,
+   text:'Foreign company bought local water rights. Free water now costs money.',
+   fn:function(g){if(g.inv.well.owned)return'Your well keeps you independent.';g.money=Math.max(0,g.money-10);g.morale-=6;return'Water costs $10 now. Morale -6.'}},
+  {id:'tax',icon:'🏛️',title:'New Export Tax',cd:4,prob:.08,
+   text:'Government taxing exports to fund a capital project.',
+   fn:function(g){var t=g.crops.cocoa.owned*3;g.money=Math.max(0,g.money-t);return t>0?'Export tax: -$'+t+'.':'No exports to tax.'}},
+  {id:'inflation',icon:'💸',title:'Prices Rising',cd:4,prob:.1,
+   text:'Cost of basics — salt, oil, medicine — spiked.',
+   fn:function(g){g.money=Math.max(0,g.money-8);return'Inflation: -$8.'}},
+  {id:'conflict',icon:'⚠️',title:'Regional Conflict',cd:4,prob:.09,
+   text:'Armed groups nearby. Roads blocked, traders fled, school closed.',
+   fn:function(g){g.money=Math.max(0,g.money-15);g.morale-=12;return'Lost $15. Morale -12.'}},
+  {id:'gender',icon:'🚫',title:'Denied at the Bank',cd:5,prob:.07,
+   cond:function(g){return g.family[0].alive},
+   text:'Amara applied for a loan. Told women need a male co-signer.',
+   fn:function(g){g.morale-=8;return'No loan. Morale -8.'}},
+  {id:'theft',icon:'🔒',title:'Livestock Stolen',cd:4,prob:.08,
+   text:'You wake up and the pen is empty. Nobody saw anything.',
+   fn:function(g){var l=Math.min(g.crops.goats.owned,2);g.crops.goats.owned-=l;var c=Math.min(g.crops.chickens.owned,1);g.crops.chickens.owned-=c;updFarm();return(l+c)>0?(l+c)+' animals stolen.':'Nothing to steal.'}},
+  {id:'illness',icon:'🤒',title:'Sickness Spreads',cd:2,prob:.17,
+   text:'Contaminated water. Illness hits the village.',
+   fn:function(g){var a=g.family.filter(function(f){return f.alive&&!f.sick});if(a.length){var v=a[Math.floor(Math.random()*a.length)];if(g.inv.clinic.owned){g.health-=4;return v.name+' sick but clinic helped. Health -4.'}v.sick=true;g.health-=12;g.money=Math.max(0,g.money-10);return v.name+' seriously ill. Cost $10. Health -12.'}return'Family stayed healthy.'}},
+  {id:'death',icon:'🕊️',title:'A Loss',cd:99,prob:.06,
+   cond:function(g){return g.family.some(function(f){return f.alive&&f.sick})},
+   text:'Despite everything, it was not enough.',
+   fn:function(g){var s=g.family.filter(function(f){return f.alive&&f.sick});if(s.length){s[0].alive=false;s[0].sick=false;g.morale-=22;g.health-=8;return s[0].name+' has died.'}return''}},
+  {id:'injury',icon:'🩹',title:'Farming Accident',cd:4,prob:.08,
+   text:'Accident with a hand tool. Every workday carries risk.',
+   fn:function(g){g.health-=8;if(!g.inv.clinic.owned){g.money=Math.max(0,g.money-8);return'Injury: Health -8, costs -$8.'}return'Injury: Health -8. Clinic helped.'}},
+  {id:'child_labor',icon:'👦',title:'A Difficult Choice',cd:4,prob:.1,ch:true,
+   cond:function(g){return g.family.some(function(f){return f.alive&&f.age<16})},
+   text:'Plantation hiring children. Good pay — but they miss school.',
+   choices:[
+     {label:'💰 Send kids (+$22)',fn:function(g){g.money+=22;g.morale-=12;g.family.forEach(function(f){if(f.alive&&f.age<16)f.edu=false});g.dec.push('child_labor');return'Earned $22. Kids exhausted. Morale -12.'}},
+     {label:'🏫 Keep in school',fn:function(g){g.morale+=5;return'No extra income. But Nia finished her chapter.'}}
+   ]},
+  {id:'ngo',icon:'🏥',title:'Aid Workers Arrive',cd:3,prob:.12,ch:true,
+   text:'International organization offers support — pick one.',
+   choices:[
+     {label:'🌾 Seeds & tools (+$20)',fn:function(g){g.money+=20;return'+$20 in supplies.'}},
+     {label:'📚 School supplies',fn:function(g){g.morale+=10;g.schS+=2;return'Learning materials. Morale +10.'}}
+   ]},
+  {id:'community',icon:'🤝',title:'Neighbors Cooperate',cd:3,prob:.1,ch:true,
+   text:'Families propose pooling money for shared water access.',
+   choices:[
+     {label:'🤝 Contribute $10',fn:function(g){g.money=Math.max(0,g.money-10);g.morale+=12;g.health+=6;return'Community well! Morale +12, Health +6.'}},
+     {label:'💰 Keep money',fn:function(g){g.morale-=6;return'Kept savings. Neighbors remember.'}}
+   ]},
+  {id:'mobile_money',icon:'📱',title:'Mobile Loan',cd:3,prob:.11,ch:true,
+   cond:function(g){return g.inv.mobile.owned},
+   text:'Banking app offers instant loan. Interest is steep.',
+   choices:[
+     {label:'💰 Borrow $28 (owe $40)',fn:function(g){g.money+=28;g.loan=40;return'+$28 now. Owe $40 next season.'}},
+     {label:'🚫 Too risky',fn:function(g){return'Declined. App sent 3 more notifications.'}}
+   ]},
+  {id:'migration',icon:'🚶',title:'Family Considers Leaving',cd:99,prob:.06,ch:true,
+   cond:function(g){return g.family[1].alive},
+   text:'Neighbors walking to city for work. Ask if you will send someone.',
+   choices:[
+     {label:'🚶 Send Kofi',fn:function(g){g.money+=15;g.morale-=10;g.family[1].alive=false;g.dec.push('migration');return'Kofi left. $15 sent back.'}},
+     {label:'🏡 Stay together',fn:function(g){g.morale+=3;return'Family stays.'}}
+   ]},
+  {id:'scholarship',icon:'🎓',title:'Scholarship!',cd:99,prob:.09,ch:true,
+   cond:function(g){return g.inv.school.owned&&g.family[2].alive},
+   text:'Teacher says Nia qualifies for scholarship exam. Transport $10.',
+   choices:[
+     {label:'📚 Pay trip ($10)',fn:function(g){g.money=Math.max(0,g.money-10);if(Math.random()<.55){g.morale+=18;g.dec.push('scholarship');return'Nia got the scholarship! Morale +18!'}return'Did not get it. But she came back determined.'}},
+     {label:'💰 Cannot afford',fn:function(g){g.morale-=6;return'Deadline passed.'}}
+   ]},
+  {id:'trader',icon:'🐪',title:'Traveling Trader',cd:3,prob:.08,ch:true,
+   cond:function(g){return g.crops.goats.owned>0},
+   text:'Trader offers premium for goats — cash today.',
+   choices:[
+     {label:'💰 Sell 1 goat ($30)',fn:function(g){g.crops.goats.owned--;g.money+=30;updFarm();return'Sold goat for $30!'}},
+     {label:'🐐 Keep goats',fn:function(g){return'Held onto livestock.'}}
+   ]},
+  {id:'fest',icon:'🎉',title:'Harvest Festival',cd:3,prob:.1,
+   text:'Village celebrates! Music, food, dancing.',
+   fn:function(g){g.morale+=10;g.health+=3;return'Morale +10, Health +3.'}},
+  {id:'good_mkt',icon:'📈',title:'Prices Are Up!',cd:3,prob:.09,
+   text:'Demand spiked for cocoa.',
+   fn:function(g){var b=g.crops.cocoa.owned*12;g.money+=b;return b>0?'Cocoa bonus: +$'+b+'!':'No cocoa to sell.'}},
+  {id:'gift',icon:'🎁',title:'Neighbor Generosity',cd:3,prob:.09,
+   text:'Neighbor with good harvest shares surplus.',
+   fn:function(g){g.money+=8;g.morale+=5;return'+$8, Morale +5.'}},
+  {id:'rain_col',icon:'🪣',title:'Rainwater Collected',cd:4,prob:.08,
+   text:'Heavy rain fills every container. Clean water for weeks.',
+   fn:function(g){g.health+=5;g.morale+=3;return'Health +5, Morale +3.'}},
+  {id:'radio',icon:'📻',title:'Weather Forecast',cd:3,prob:.07,
+   cond:function(g){return g.inv.mobile.owned},
+   text:'Phone picks up regional forecast — useful for planning.',
+   fn:function(g){g.morale+=5;return'Advance info. Morale +5.'}}
+];
+
+// === FARM VISUAL ===
+function updFarm(){
+  var t=new Array(TILES).fill(null);var i=0;
+  for(var k in G.crops){for(var j=0;j<G.crops[k].owned&&i<TILES;j++){t[i]=k;i++}}
+  for(var k in G.inv){if(G.inv[k].owned&&i<TILES){t[i]='i_'+k;i++}}
+  G.tiles=t;
+  var h='';
+  for(var x=0;x<TILES;x++){
+    var v=t[x];
+    if(!v){h+='<div class="ft"></div>'}
+    else if(v.indexOf('i_')===0){var ik=v.slice(2);h+='<div class="ft bld">'+((IIC[ik])||'🔧')+'</div>'}
+    else{h+='<div class="ft on">'+((CIC[v])||'🌱')+'</div>'}
+  }
+  document.getElementById('farm').innerHTML=h;
+}
+
+// === RENDER ===
+function renderFam(){
+  var h='';
+  for(var i=0;i<G.family.length;i++){
+    var f=G.family[i];
+    if(!f.alive){h+='<div class="fm dead"><span class="av">'+AV[i]+'</span><div class="fi"><strong>'+f.name+'</strong><span class="fr">'+f.role+' 🕊️</span></div></div>';continue}
+    var cls=f.sick?'sick':(f.edu?'edu':'');
+    h+='<div class="fm '+cls+'"><span class="av">'+AV[i]+'</span><div class="fi"><strong>'+f.name+'</strong><span class="fr">'+f.role+', age '+f.age+'</span></div></div>';
+  }
+  document.getElementById('fam').innerHTML=h;
+}
+
+function renderCrops(){
+  var h='';
+  for(var k in G.crops){
+    var c=G.crops[k];
+    var can=G.money>=c.cost;
+    var mx=Math.floor(G.money/c.cost);
+    h+='<div class="si"><div class="sil"><div class="sin">'+CIC[k]+' '+c.label+'</div><div class="sid">'+c.desc+'</div>';
+    if(c.owned>0) h+='<div class="sio">'+CVB[k]+': '+c.owned+'</div>';
+    h+='</div><div class="sir">';
+    if(mx>1) h+='<button class="b bm" onclick="buyMax(\''+k+'\')">MAX ('+mx+')</button>';
+    h+='<button class="b bc" '+(can?'':'disabled')+' onclick="buyOne(\''+k+'\')">$'+c.cost+'</button>';
+    h+='</div></div>';
+  }
+  document.getElementById('clist').innerHTML=h;
+}
+
+function renderInv(){
+  var h='';
+  for(var k in G.inv){
+    var inv=G.inv[k];
+    h+='<div class="si"><div class="sil"><div class="sin">'+IIC[k]+' '+inv.label+'</div><div class="sid">'+inv.desc+'</div></div>';
+    if(inv.owned){h+='<button class="b bd" disabled>✓ Done</button>'}
+    else{h+='<button class="b bi" '+(G.money>=inv.cost?'':'disabled')+' onclick="buyInv(\''+k+'\')">$'+inv.cost+'</button>'}
+    h+='</div>';
+  }
+  document.getElementById('ilist').innerHTML=h;
+}
+
+function renderStats(){
+  anim('yr',G.year);anim('mx',MAXS);anim('mn',G.money);anim('hp',Math.max(0,G.health));anim('mr',Math.max(0,G.morale));
+}
+function anim(id,v){var e=document.getElementById(id);if(e.textContent!=String(v)){e.textContent=v;e.style.transform='scale(1.3)';setTimeout(function(){e.style.transform=''},200)}}
+
+function renderLog(){
+  var h='';var items=G.log.slice(-15).reverse();
+  for(var i=0;i<items.length;i++){h+='<div class="le '+items[i].t+'">'+items[i].x+'</div>'}
+  document.getElementById('logscr').innerHTML=h;
+}
+
+function renderAll(){renderFam();renderCrops();renderInv();renderStats();updFarm();renderLog()}
+
+// === ACTIONS ===
+function buyOne(k){
+  var c=G.crops[k];
+  if(G.money>=c.cost){
+    G.money-=c.cost;c.owned++;
+    addLog(CVB[k]+' '+c.label+' '+CIC[k],'neutral');
+    flt('-$'+c.cost,'neg');
+    updFarm();renderAll();
+  }
+}
+
+function buyMax(k){
+  var c=G.crops[k];
+  var n=Math.floor(G.money/c.cost);
+  if(n>0){
+    var total=n*c.cost;
+    G.money-=total;c.owned+=n;
+    addLog(CVB[k]+' '+n+'x '+c.label+' '+CIC[k],'neutral');
+    flt('-$'+total,'neg');
+    updFarm();renderAll();
+  }
+}
+
+function buyInv(k){
+  var inv=G.inv[k];
+  if(G.money>=inv.cost&&!inv.owned){
+    G.money-=inv.cost;inv.owned=true;
+    addLog(IVB[k]+' '+inv.label+' '+IIC[k],'good');
+    flt('-$'+inv.cost,'neg');
+    if(k==='school'){G.family.forEach(function(f){if(f.alive&&f.age<18)f.edu=true})}
+    updFarm();renderAll();
+  }
+}
+
+function addLog(x,t){G.log.push({x:'Season '+G.year+': '+x,t:t||'neutral'})}
+
+function flt(txt,cls){
+  var e=document.createElement('div');
+  e.className='fln '+cls;e.textContent=txt;
+  e.style.left=Math.random()*50+25+'%';
+  e.style.top=Math.random()*20+25+'%';
+  document.body.appendChild(e);
+  setTimeout(function(){e.remove()},1000);
+}
+
+// === SEASON ===
+function endSeason(){
+  document.getElementById('endbtn').disabled=true;
+  var ov=document.getElementById('sov');
+  document.getElementById('stx').textContent='Season '+G.year+' — The rains decide...';
+  ov.className='sov active';
+  setTimeout(function(){ov.className='sov';doSeason()},900);
+}
+
+function doSeason(){
+  // Revenue
+  var rev=0;
+  for(var k in G.crops){var c=G.crops[k];for(var i=0;i<c.owned;i++){var r=c.rev[0]+Math.floor(Math.random()*(c.rev[1]-c.rev[0]+1));if(G.inv.mobile.owned&&k==='cocoa')r=Math.floor(r*1.2);rev+=r}}
+  G.money+=rev;G.earned+=rev;
+  if(rev>0){addLog('💰 Harvest: +$'+rev,'good');flt('+$'+rev,'pos')}
+  else addLog('No harvest.','neutral');
+
+  // Loan
+  if(G.loan){var la=G.loan;G.money-=la;if(G.money<0){addLog('Could not repay loan.','bad');G.money=0}else addLog('Repaid loan: -$'+la,'neutral');G.loan=0}
+
+  // Insurance reset
+  if(G.inv.insurance.owned)G.inv.insurance.owned=false;
+
+  // Living costs
+  var alive=G.family.filter(function(f){return f.alive}).length;
+  var cost=alive*4;
+  G.money-=cost;
+  if(G.money<0){G.health-=8;G.money=0;addLog('Cannot afford basics. Health dropping.','bad')}
+  else addLog('Living costs: -$'+cost,'neutral');
+
+  // Ongoing
+  if(G.inv.school.owned)G.schS++;
+  if(G.inv.solar.owned){G.morale+=2;G.schS+=.5}
+
+  // Heal
+  G.family.forEach(function(f){
+    if(f.alive&&f.sick&&Math.random()<(G.inv.clinic.owned?.55:.22)){f.sick=false;addLog(f.name+' recovered! 🎉','good')}
+  });
+
+  G.hist.push({s:G.year,m:G.money,h:G.health,mo:G.morale});
+  renderAll();
+
+  // Events then post
+  G._post=function(){
+    G.family.forEach(function(f){if(f.alive)f.age++});
+    G.morale=Math.min(100,Math.max(0,G.morale+(G.money>35?2:-2)));
+    G.health=Math.min(100,Math.max(0,G.health-(G.family.some(function(f){return f.sick})?2:0)));
+    if(gameOver())return;
+    EV.forEach(function(e){if(e.rec)e.rec(G)});
+    G.year++;
+    updFarm();renderAll();
+    document.getElementById('endbtn').disabled=false;
+  };
+  processEv();
+}
+
+function canFire(e){
+  if(e.cond&&!e.cond(G))return false;
+  var last=G.cd[e.id]||0;
+  if(G.year-last<(e.cd||1))return false;
+  return Math.random()<e.prob;
+}
+
+function processEv(){
+  var pool=[];
+  EV.forEach(function(e){if(canFire(e))pool.push(e)});
+  if(!pool.length){
+    var elig=EV.filter(function(e){return(!e.cond||e.cond(G))&&(G.year-(G.cd[e.id]||0)>=(e.cd||1))});
+    if(elig.length)pool.push(elig[Math.floor(Math.random()*elig.length)]);
+  }
+  var r=Math.random(),max=1;
+  if(G.year>=Math.floor(MAXS*.7)){max=r<.25?3:r<.65?2:1}
+  else{max=r<.35?2:1}
+  pool=pool.slice(0,max);
+  pool.forEach(function(e){G.cd[e.id]=G.year});
+  if(!pool.length){addLog('A quiet season.','neutral');if(G._post){G._post();G._post=null}return}
+  G.eq=pool;showEv();
+}
+
+function showEv(){
+  if(!G.eq.length){renderAll();return}
+  var e=G.eq.shift();
+  document.getElementById('eic').textContent=e.icon;
+  document.getElementById('etl').textContent=e.title;
+  document.getElementById('etx').textContent=e.text;
+  var imp=document.getElementById('eim');
+  var ch=document.getElementById('ech');
+  if(e.ch&&e.choices){
+    imp.textContent='What will you do?';
+    var btns='';
+    for(var i=0;i<e.choices.length;i++){
+      btns+='<button class="mb '+(i===0?'mb1':'mb2')+'" onclick="resolveEv(\''+e.id+'\','+i+')">'+e.choices[i].label+'</button>';
+    }
+    ch.innerHTML=btns;
+  }else{
+    var res=e.fn(G);
+    imp.textContent=res;
+    var tp=(res.indexOf('+')>=0||res.indexOf('saved')>=0||res.indexOf('recovered')>=0)?'good':'bad';
+    addLog(e.icon+' '+e.title+': '+res,tp);
+    ch.innerHTML='<button class="mb mb1" onclick="closeEv()">Continue</button>';
+  }
+  document.getElementById('mbg').className='mbg open';
+}
+
+function resolveEv(eid,ci){
+  var e=null;
+  for(var i=0;i<EV.length;i++){if(EV[i].id===eid){e=EV[i];break}}
+  if(e&&e.choices&&e.choices[ci]){
+    var res=e.choices[ci].fn(G);
+    document.getElementById('eim').textContent=res;
+    var tp=(res.indexOf('+')>=0||res.indexOf('Morale +')>=0)?'good':((res.indexOf('-')>=0||res.indexOf('Lost')>=0||res.indexOf('Retaliation')>=0)?'bad':'neutral');
+    addLog(e.icon+' '+e.title+': '+res,tp);
+    document.getElementById('ech').innerHTML='<button class="mb mb1" onclick="closeEv()">Continue</button>';
+  }
+}
+
+function closeEv(){
+  document.getElementById('mbg').className='mbg';
+  if(G.eq.length){setTimeout(showEv,250)}
+  else{renderAll();if(G._post){G._post();G._post=null}}
+}
+
+// === GAME OVER ===
+function gameOver(){
+  var alive=G.family.filter(function(f){return f.alive});
+  var go=false,title='',score=0;
+  if(!alive.length||!G.family[0].alive){go=true;title='💔 The Family Could Not Survive';score=0}
+  else if(G.health<=0){go=true;title='🏥 Health Crisis — Game Over';score=50}
+  else if(G.year>=MAXS){
+    go=true;
+    score=G.money+(G.health*2)+(G.morale*2)+(G.schS*12)+(alive.length*25);
+    if(score>350)title='🌟 Against All Odds — Your Family Thrived!';
+    else if(score>180)title='😓 Surviving, But Barely';
+    else title='🔄 A Cycle Unbroken';
+  }
+  if(!go)return false;
+
+  document.getElementById('game').style.display='none';
+  var gv=document.getElementById('gover');gv.style.display='flex';
+  document.getElementById('got').textContent=title;
+
+  var names=alive.map(function(f){return f.name}).join(', ')||'None';
+  var edu=G.family.filter(function(f){return f.edu&&f.alive}).length;
+  var died=G.family.filter(function(f){return!f.alive}).length;
+
+  document.getElementById('gos').innerHTML='Seasons: <strong>'+Math.min(G.year,MAXS)+'</strong>/'+MAXS+' &nbsp;|&nbsp; Family: <strong>'+alive.length+'/5</strong> ('+names+')<br>Lost: <strong>'+died+'</strong> &nbsp;|&nbsp; Savings: <strong>$'+G.money+'</strong> &nbsp;|&nbsp; Earned: <strong>$'+G.earned+'</strong><br>School: <strong>'+Math.floor(G.schS)+'</strong> seasons &nbsp;|&nbsp; Educated: <strong>'+edu+'</strong>';
+
+  var cl=G.dec.indexOf('child_labor')>=0;
+  var mig=G.dec.indexOf('migration')>=0;
+  var sch=G.dec.indexOf('scholarship')>=0;
+
+  var R='<h3>📝 What Just Happened — And Why It Matters</h3>';
+  R+='<p>You just experienced '+Math.min(G.year,MAXS)+' seasons as a subsistence farming family. Every choice you made — what to grow, what to invest in, how to respond to events — reflects real decisions made by <strong>hundreds of millions of people across the Eastern Hemisphere</strong>.</p>';
+
+  R+='<h3>🔍 Your Story</h3>';
+  if(score>350)R+='<p>Your family did well. Think about what made the difference — was it your strategy, your timing, or factors outside your control? What combination of choices and circumstances led to this outcome?</p>';
+  else if(score>180)R+='<p>Your family survived, but it was a struggle. Think about the gap between how hard you worked and what you ended up with. What factors made it difficult to get ahead even when you made smart choices?</p>';
+  else if(alive.length>0)R+='<p>Despite your efforts, things did not improve much. Look back at your season log — how many setbacks came from your decisions versus events outside your control?</p>';
+  else R+='<p>Your family did not survive. Review your season log — what were the turning points? How many were caused by your choices versus circumstances you could not control?</p>';
+
+  if(cl)R+='<p>⚡ You chose to send children to work. Globally, <strong>160 million children</strong> are part of the labor force. What conditions make families face that tradeoff between income today and education for the future?</p>';
+  if(mig)R+='<p>⚡ A family member migrated to the city. By 2050, an estimated <strong>216 million people</strong> may relocate within their own countries due to changing environmental conditions. What geographic factors drive that movement?</p>';
+  if(sch)R+='<p>⚡ Nia earned a scholarship — think about the chain of investments and circumstances that made that possible.</p>';
+
+  R+='<h3>🌍 Geography Connections — Oklahoma Standards</h3>';
+
+  R+='<div class="std">OAS 7.3 — Physical Systems: Climate, weather, and natural hazards influence human activity</div>';
+  R+='<p><strong>Human-Environment Interaction:</strong> Your family\'s outcomes were shaped by rainfall, soil quality, and water access. Droughts, floods, and heat waves influenced every decision. As climate patterns shift, these events become less predictable. How does that unpredictability affect farming communities differently depending on their geographic location and available resources?</p>';
+
+  R+='<div class="std">OAS 7.4 — Human Systems: Economic activities, trade, and migration across the Eastern Hemisphere</div>';
+  R+='<p><strong>Global Trade Networks:</strong> When cocoa prices changed in this game, it was not because of anything on your farm — it was driven by international markets. Your family\'s income was connected to economic decisions made far away. How do global trade networks create connections between producers in one region and consumers in another? Who has more influence over prices in that relationship?</p>';
+
+  R+='<div class="std">OAS 7.4.3 — Compare how cultural, economic, and political factors cause movement and settlement</div>';
+  R+='<p><strong>Push & Pull Factors:</strong> Conflict, drought, and limited economic opportunity are all <em>push factors</em>. Urban jobs and services are <em>pull factors</em>. What push and pull factors did you observe during the game? How do those compare to migration patterns you have studied in the Eastern Hemisphere?</p>';
+
+  R+='<div class="std">OAS 7.5 — Human-Environment Interaction: How humans modify and adapt to their environment</div>';
+  R+='<p><strong>Adaptation & Modification:</strong> Wells, drought-resistant crops, solar panels, and clinic access are all ways humans adapt to and modify their environment. In the game, each required significant investment. What determines whether a community has access to these adaptations? How does geography play a role?</p>';
+
+  R+='<div class="std">OAS 7.2.1 — Use geographic reasoning to analyze connections between physical and human systems</div>';
+  R+='<p><strong>Development Indicators:</strong> Geographers measure development using indicators like access to healthcare, education, clean water, infrastructure, and economic opportunity. Which of these did your family have access to? Which were missing? How did that access — or lack of it — shape your outcomes?</p>';
+
+  R+='<h3>💬 Discussion Questions</h3>';
+  R+='<p class="q">1. What was the hardest decision you faced? What tradeoffs were involved?</p>';
+  R+='<p class="q">2. Sort the events you experienced into two categories: things you could control and things you could not. What pattern do you notice?</p>';
+  R+='<p class="q">3. If you could add ONE resource or policy to this game to improve outcomes, what would it be? Does it exist in real life? What would it take to implement?</p>';
+  R+='<p class="q">4. How did geographic factors — location, climate, access to markets — shape your family\'s experience?</p>';
+  R+='<p class="q">5. What connections do you see between this simulation and real places you have studied in the Eastern Hemisphere?</p>';
+
+  R+='<p style="margin-top:1rem;font-size:.75rem;color:var(--dim)"><em>Oklahoma Academic Standards — 7th Grade Social Studies, Eastern Hemisphere Geography (OAS 7.2.1, 7.3, 7.4, 7.4.3, 7.5)</em></p>';
+
+  document.getElementById('goref').innerHTML=R;
+  return true;
+}
+
+function startGame(){
+  G=freshG();
+  document.getElementById('intro').style.display='none';
+  document.getElementById('game').style.display='block';
+  document.getElementById('mx').textContent=MAXS;
+  updFarm();renderAll();
+}
+</script>
+</body>
+</html>
